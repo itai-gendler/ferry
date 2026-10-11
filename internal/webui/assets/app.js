@@ -489,29 +489,31 @@ async function responseError(response) {
   }
 }
 
+// Saving a fetched blob: URL fails in Android in-app WebViews, which hand the
+// blob: URL to the system and find no app for it. The Server instead issues a
+// short-lived link that needs no Bearer header, and the browser navigates to
+// it, so its own downloader (or the system browser it hands off to) saves it.
 async function downloadMessageFile(message) {
   const generation = authGeneration;
   activityStatus = "Downloading…";
   sendError = "";
   renderStatus();
   try {
-    const response = await authenticatedFetch(message.file.download_url, { cache: "no-store", signal: authController.signal });
+    const response = await authenticatedFetch(`${message.file.download_url}/link`, { method: "POST", cache: "no-store", signal: authController.signal });
     if (generation !== authGeneration) return;
     if (response.status === 401) {
       showAccess("This device is no longer connected.");
       return;
     }
     if (!response.ok) throw new Error(await readError(response));
-    const blob = await response.blob();
+    const link = await response.json();
     if (generation !== authGeneration) return;
-    const objectURL = URL.createObjectURL(blob);
     const download = document.createElement("a");
-    download.href = objectURL;
+    download.href = link.url;
     download.download = message.file.name;
     document.body.append(download);
     download.click();
     download.remove();
-    setTimeout(() => URL.revokeObjectURL(objectURL), 0);
   } catch (error) {
     if (generation !== authGeneration || error.name === "AbortError") return;
     sendError = error.message;

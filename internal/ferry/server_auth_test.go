@@ -124,6 +124,7 @@ func TestAccessJSONIsStrictAndSettingsAreProtected(t *testing.T) {
 		{http.MethodGet, "/api/v1/session"}, {http.MethodGet, "/api/v1/messages"},
 		{http.MethodPost, "/api/v1/messages/text"}, {http.MethodPost, "/api/v1/messages/file"},
 		{http.MethodGet, "/api/v1/files/0123456789abcdef0123456789abcdef"},
+		{http.MethodPost, "/api/v1/files/0123456789abcdef0123456789abcdef/link"},
 		{http.MethodGet, "/api/v1/devices"}, {http.MethodDelete, "/api/v1/devices/0123456789abcdef0123456789abcdef"},
 		{http.MethodGet, "/api/v1/settings/access"}, {http.MethodPut, "/api/v1/settings/access"},
 		{http.MethodGet, "/api/v1/unknown"},

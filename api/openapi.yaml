@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Ferry API
-  version: 0.4.0
+  version: 0.5.0
 servers:
   - url: http://127.0.0.1:8080
 security:
@@ -223,6 +223,38 @@ paths:
             "*/*": {}
         "404": { $ref: "#/components/responses/Error" }
         "401": { $ref: "#/components/responses/Error" }
+  /api/v1/files/{message_id}/link:
+    post:
+      description: Issues a URL that downloads this one file without the Bearer header, for browsers that can save a file only by navigating to it. The URL works for five minutes, may be requested more than once in that time, and stops working once the issuing device is revoked or the Server restarts.
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[0-9a-f]{32}$" }
+      responses:
+        "201":
+          description: Download link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DownloadLink" }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /api/v1/downloads/{ticket}:
+    get:
+      security: []
+      description: Original file bytes for a link issued by `POST /api/v1/files/{message_id}/link`. A malformed, unknown or expired ticket, or one whose issuing device was revoked, gets the same 404.
+      parameters:
+        - name: ticket
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[A-Za-z0-9_-]{43}$" }
+      responses:
+        "200":
+          description: Original file bytes, sent as an attachment
+          content:
+            "*/*": {}
+        "404": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     deviceBearer:
@@ -274,6 +306,13 @@ components:
         media_type: { type: string }
         size: { type: integer, minimum: 0, maximum: 67108864 }
         download_url: { type: string }
+      additionalProperties: false
+    DownloadLink:
+      type: object
+      required: [url, expires_at]
+      properties:
+        url: { type: string, description: "Same-origin path of the form /api/v1/downloads/{ticket}." }
+        expires_at: { type: string, format: date-time }
       additionalProperties: false
     FileMessage:
       type: object

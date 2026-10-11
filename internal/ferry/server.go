@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	"github.com/max1874/ferry/internal/webui"
@@ -28,6 +29,8 @@ type server struct {
 	store    *Store
 	logger   *log.Logger
 	accessMu sync.Mutex
+	now      func() time.Time
+	links    downloadLinks
 }
 
 type HandlerOptions struct {
@@ -39,6 +42,10 @@ type HandlerOptions struct {
 }
 
 func NewHandler(store *Store, options HandlerOptions) http.Handler {
+	return newHandler(store, options, time.Now)
+}
+
+func newHandler(store *Store, options HandlerOptions, now func() time.Time) http.Handler {
 	if options.Logger == nil {
 		options.Logger = log.Default()
 	}
@@ -50,13 +57,14 @@ func NewHandler(store *Store, options HandlerOptions) http.Handler {
 		}
 		boundary.trusted = &origin
 	}
-	s := &server{store: store, logger: options.Logger}
+	s := &server{store: store, logger: options.Logger, now: now, links: downloadLinks{entries: map[[32]byte]downloadLink{}}}
 	api := http.NewServeMux()
 	api.HandleFunc("GET /api/v1/session", s.session)
 	api.HandleFunc("GET /api/v1/messages", s.listMessages)
 	api.HandleFunc("POST /api/v1/messages/text", s.createText)
 	api.HandleFunc("POST /api/v1/messages/file", s.createFile)
 	api.HandleFunc("GET /api/v1/files/{message_id}", s.downloadFile)
+	api.HandleFunc("POST /api/v1/files/{message_id}/link", s.createDownloadLink)
 	api.HandleFunc("GET /api/v1/devices", s.listDevices)
 	api.HandleFunc("DELETE /api/v1/devices/{device_id}", s.deleteDevice)
 	api.HandleFunc("GET /api/v1/settings/access", s.accessSettings)
@@ -66,6 +74,7 @@ func NewHandler(store *Store, options HandlerOptions) http.Handler {
 	mux.HandleFunc("GET /healthz", s.health)
 	mux.HandleFunc("GET /api/v1/access", s.accessStatus)
 	mux.HandleFunc("POST /api/v1/access/join", s.join)
+	mux.HandleFunc("GET /api/v1/downloads/{ticket}", s.downloadByLink)
 	mux.Handle("/api/v1/", s.requireDevice(api))
 	mux.Handle("/", webui.Handler())
 	return requestBoundary(securityHeaders(mux), boundary)
@@ -523,7 +532,11 @@ func validMultipartShape(r *http.Request) bool {
 }
 
 func (s *server) downloadFile(w http.ResponseWriter, r *http.Request) {
-	message, file, err := s.store.OpenFile(r.Context(), r.PathValue("message_id"))
+	s.serveFile(w, r, r.PathValue("message_id"))
+}
+
+func (s *server) serveFile(w http.ResponseWriter, r *http.Request, messageID string) {
+	message, file, err := s.store.OpenFile(r.Context(), messageID)
 	if errors.Is(err, ErrNotFound) {
 		writeError(w, http.StatusNotFound, "not_found", "file message was not found")
 		return
