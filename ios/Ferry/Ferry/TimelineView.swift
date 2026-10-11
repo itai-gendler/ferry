@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct TimelineView: View {
     @Bindable var model: AppModel
     @State private var importingFile = false
+    @FocusState private var composerFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -23,6 +24,10 @@ struct TimelineView: View {
                         }
                     }.padding(.horizontal, 18).padding(.vertical, 20)
                 }
+                // The message field is multi-line, so Return adds a line instead of
+                // closing the keyboard; dragging or tapping the timeline closes it.
+                .scrollDismissesKeyboard(.interactively)
+                .simultaneousGesture(TapGesture().onEnded { composerFocused = false })
                 .onChange(of: model.messages.count) { _, _ in
                     if let id = model.messages.last?.id { withAnimation { proxy.scrollTo(id, anchor: .bottom) } }
                 }
@@ -81,6 +86,7 @@ struct TimelineView: View {
                         .accessibilityIdentifier("attach-file")
                     TextField("Message", text: $model.draft, axis: .vertical)
                         .lineLimit(1...5).padding(.horizontal, 4).padding(.vertical, 10)
+                        .focused($composerFocused)
                         .disabled(model.selectedFile != nil).accessibilityIdentifier("message-input")
                     Button("Send", systemImage: "arrow.up") { Task { await model.send() } }
                         .labelStyle(.iconOnly).buttonStyle(.glassProminent).controlSize(.large)
