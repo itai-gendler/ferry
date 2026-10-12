@@ -118,6 +118,33 @@ class FerryClientTest {
         assertEquals(413, (error as FerryApiException).status)
     }
 
+    // The clipboard's read grant can be gone by the time the user sends, so a
+    // pasted image must upload from the bytes taken at paste time.
+    @Test fun pastedImageUploadsItsSnapshotWithoutReopeningTheUri() {
+        val response = """{"id":"$id","sequence":1,"kind":"file","sender_name":"Pixel","sender_kind":"android","created_at":"2026-08-30T10:00:00Z",""" +
+            """"file":{"name":"shot.png","media_type":"image/png","size":3,"download_url":"/api/v1/files/$id"}}"""
+        val connection = FakeConnection(201, response.toByteArray(), "application/json")
+        val store = ClipboardContentStore { ByteArrayInputStream(byteArrayOf(1, 2, 3)) }
+        val client = FerryClient(store, openConnection = { connection })
+
+        val pasted = runBlocking { store.snapshot("content://clipboard/1") }
+        runBlocking { client.sendFile(ServerEndpoint.parse("http://10.0.0.2:42817"), "token", pasted) }
+
+        assertEquals(3L, pasted.size)
+        val body = connection.sent.toByteArray()
+        val header = "filename=\"shot.png\"\r\nContent-Type: image/png\r\n\r\n".toByteArray()
+        val start = (0..body.size - header.size).first { body.copyOfRange(it, it + header.size).contentEquals(header) } + header.size
+        assertTrue(body.copyOfRange(start, start + 3).contentEquals(byteArrayOf(1, 2, 3)))
+    }
+
+    @Test fun oversizedPasteIsRejectedWhenItIsRead() {
+        val store = ClipboardContentStore { OversizedContentStore().open(it) }
+
+        val error = runCatching { runBlocking { store.snapshot("content://clipboard/1") } }.exceptionOrNull()
+
+        assertEquals(413, (error as FerryApiException).status)
+    }
+
     @Test fun boundsAFullPageOfMaximallyEscapedText() {
         val connection = FakeConnection(
             200,
@@ -199,6 +226,18 @@ class FerryClientTest {
             }
         }
         override fun delete(uri: String): Boolean { deleted += uri; return deleteSucceeds }
+    }
+
+    /** A clipboard image whose URI may be opened once, at paste time. */
+    private class ClipboardContentStore(private val bytes: (String) -> java.io.InputStream) : ContentStore {
+        private var opened = 0
+        override suspend fun describe(uri: String) = SelectedContent(uri, "shot.png", "image/png", null)
+        override fun open(uri: String): java.io.InputStream {
+            if (opened++ > 0) error("the URI was reopened after paste")
+            return bytes(uri)
+        }
+        override fun create(uri: String) = error("unexpected")
+        override fun delete(uri: String) = true
     }
 
     private class OversizedContentStore : ContentStore {

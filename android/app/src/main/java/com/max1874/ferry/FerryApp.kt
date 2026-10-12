@@ -6,7 +6,13 @@ import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.content.MediaType
+import androidx.compose.foundation.content.ReceiveContentListener
+import androidx.compose.foundation.content.TransferableContent
+import androidx.compose.foundation.content.contentReceiver
+import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +36,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -51,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -393,9 +403,38 @@ private fun CopyButton(value: String) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Composer(state: FerryUiState, model: FerryViewModel, onPickPhoto: () -> Unit, onPickFile: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
+    // The value-based text field never offers Paste for an image, so this field
+    // owns its text and reports each edit to the model. The model writes back
+    // only to empty it, after a send or a session reset.
+    val draftField = rememberTextFieldState(state.draft)
+    LaunchedEffect(draftField) {
+        snapshotFlow { draftField.text.toString() }.collect { if (it != model.state.value.draft) model.updateDraft(it) }
+    }
+    LaunchedEffect(state.draft) {
+        if (state.draft.isEmpty() && model.state.value.draft.isEmpty() && draftField.text.isNotEmpty()) draftField.clearText()
+    }
+    // A pasted or keyboard-inserted image becomes the single attachment, as a
+    // picked photo would; text that came with it is dropped, as on the Web.
+    // The receiver is also a drop target, so it must not replace an attachment
+    // the disabled field is showing.
+    val imageReceiver = remember(model) {
+        object : ReceiveContentListener {
+            override fun onReceive(transferableContent: TransferableContent): TransferableContent? {
+                if (!transferableContent.hasMediaType(MediaType.Image)) return transferableContent
+                if (model.state.value.selectedFile != null) return transferableContent
+                val clip = transferableContent.clipEntry.clipData
+                val uri = (0 until clip.itemCount).firstNotNullOfOrNull { clip.getItemAt(it).uri } ?: return transferableContent
+                val declared = (0 until clip.description.mimeTypeCount).map(clip.description::getMimeType)
+                    .firstOrNull { it.startsWith("image/") && !it.contains('*') }
+                model.pasteContent(uri.toString(), declared)
+                return null
+            }
+        }
+    }
     Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)) {
         state.credentialWarning?.let { ErrorText(it) }
         state.statusMessage?.let {
@@ -421,13 +460,11 @@ private fun Composer(state: FerryUiState, model: FerryViewModel, onPickPhoto: ()
                     }
                 }
                 OutlinedTextField(
-                    value = state.draft,
-                    onValueChange = model::updateDraft,
+                    state = draftField,
                     placeholder = { Text("Message Ferry") },
                     enabled = state.selectedFile == null,
-                    minLines = 1,
-                    maxLines = 5,
-                    modifier = Modifier.weight(1f),
+                    lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = 1, maxHeightInLines = 5),
+                    modifier = Modifier.weight(1f).contentReceiver(imageReceiver),
                 )
                 Spacer(Modifier.width(8.dp))
                 Button(

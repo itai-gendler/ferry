@@ -51,30 +51,17 @@ struct FerryClient: FerryServicing {
     }
 
     func sendFile(endpoint: ServerEndpoint, token: String, file: SelectedFile) async throws -> MessagePayload {
-        let readTask = Task.detached(priority: .userInitiated) {
-            let accessing = file.url.startAccessingSecurityScopedResource()
-            defer { if accessing { file.url.stopAccessingSecurityScopedResource() } }
-            let handle = try FileHandle(forReadingFrom: file.url)
-            defer { try? handle.close() }
-            var data = Data()
-            while true {
-                try Task.checkCancellation()
-                guard let chunk = try handle.read(upToCount: 256 << 10), !chunk.isEmpty else { break }
-                guard data.count + chunk.count <= SelectedFile.maximumBytes else {
-                    throw ClientError.rejected("Files must be 64 MB or smaller.")
-                }
-                data.append(chunk)
-            }
-            return data
-        }
-        let data = try await withTaskCancellationHandler {
-            try await readTask.value
-        } onCancel: {
-            readTask.cancel()
+        let data: Data
+        switch file.contents {
+        case .pasted(let pasted):
+            guard pasted.count <= SelectedFile.maximumBytes else { throw ClientError.rejected("Files must be 64 MB or smaller.") }
+            data = pasted
+        case .file(let url):
+            data = try await read(url)
         }
         try Task.checkCancellation()
         let boundary = "Ferry-\(UUID().uuidString)"
-        var body = Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(safeFilename(file.name))\"\r\nContent-Type: application/octet-stream\r\n\r\n".utf8)
+        var body = Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(safeFilename(file.name))\"\r\nContent-Type: \(safeMediaType(file.mediaType))\r\n\r\n".utf8)
         body.append(data)
         body.append(Data("\r\n--\(boundary)--\r\n".utf8))
         return try await json(endpoint: endpoint, path: "/api/v1/messages/file", method: "POST", token: token,
@@ -117,6 +104,40 @@ struct FerryClient: FerryServicing {
         }
         do { return try JSONDecoder().decode(T.self, from: data) }
         catch { throw ClientError.invalidResponse }
+    }
+
+    private func read(_ url: URL) async throws -> Data {
+        let readTask = Task.detached(priority: .userInitiated) {
+            let accessing = url.startAccessingSecurityScopedResource()
+            defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            var data = Data()
+            while true {
+                try Task.checkCancellation()
+                guard let chunk = try handle.read(upToCount: 256 << 10), !chunk.isEmpty else { break }
+                guard data.count + chunk.count <= SelectedFile.maximumBytes else {
+                    throw ClientError.rejected("Files must be 64 MB or smaller.")
+                }
+                data.append(chunk)
+            }
+            return data
+        }
+        return try await withTaskCancellationHandler {
+            try await readTask.value
+        } onCancel: {
+            readTask.cancel()
+        }
+    }
+
+    /// A media type goes into a multipart header line, so anything that could
+    /// end that line or is not a plain `type/subtype` falls back to bytes.
+    private func safeMediaType(_ value: String) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "!#$&^_.+-/"))
+        guard value.split(separator: "/").count == 2, value.unicodeScalars.allSatisfy(allowed.contains) else {
+            return "application/octet-stream"
+        }
+        return value
     }
 
     private func safeFilename(_ value: String) -> String {

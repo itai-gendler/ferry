@@ -159,12 +159,25 @@ class FerryViewModel(
         }
     }
 
-    fun selectContent(uri: String) {
+    fun selectContent(uri: String) = choose { contentStore.describe(uri) }
+
+    /**
+     * An image pasted into the message field takes the same single attachment
+     * slot as a picked file; only its bytes are read at once. A provider that
+     * reports no type falls back to the one the clip declared, so the image is
+     * still previewed instead of arriving as bytes.
+     */
+    fun pasteContent(uri: String, declaredType: String? = null) = choose {
+        val file = contentStore.snapshot(uri)
+        if (declaredType != null && !file.mediaType.startsWith("image/")) file.copy(mediaType = declaredType) else file
+    }
+
+    private fun choose(read: suspend () -> SelectedContent) {
         val current = generation
         val selection = ++fileRevision
         scope.launch {
             try {
-                val file = withContext(ioDispatcher) { contentStore.describe(uri) }
+                val file = withContext(ioDispatcher) { read() }
                 if (current != generation || selection != fileRevision) return@launch
                 if (file.size != null && (file.size < 0 || file.size > FerryJson.MAX_FILE_BYTES)) {
                     throw FerryApiException(413, "payload_too_large", "Files must be 64 MB or smaller.")

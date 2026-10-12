@@ -18,7 +18,7 @@ final class FerryUITests: XCTestCase {
         XCTAssertTrue(currentDevice.waitForExistence(timeout: 10))
         XCTAssertEqual(currentDevice.label, "iPhone 17 Pro")
 
-        let input = app.textFields["message-input"]
+        let input = app.textViews["message-input"]
         XCTAssertTrue(input.waitForExistence(timeout: 3))
         input.tap()
         input.typeText("from iphone via macmini 42817")
@@ -42,7 +42,7 @@ final class FerryUITests: XCTestCase {
         let currentDevice = app.staticTexts["current-device"]
         XCTAssertTrue(currentDevice.waitForExistence(timeout: 10))
         XCTAssertEqual(currentDevice.label, "iPhone UI Test")
-        let input = app.textFields["message-input"]
+        let input = app.textViews["message-input"]
         XCTAssertTrue(input.waitForExistence(timeout: 3))
         input.tap()
         input.typeText("hello from iOS")

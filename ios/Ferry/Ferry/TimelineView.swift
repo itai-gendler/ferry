@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 struct TimelineView: View {
     @Bindable var model: AppModel
     @State private var importingFile = false
-    @FocusState private var composerFocused: Bool
+    @State private var composerFocused = false
 
     var body: some View {
         NavigationStack {
@@ -71,7 +71,7 @@ struct TimelineView: View {
             }
             if let file = model.selectedFile {
                 HStack {
-                    Label(file.name, systemImage: "doc").lineLimit(1)
+                    Label(file.name, systemImage: file.mediaType.hasPrefix("image/") ? "photo" : "doc").lineLimit(1)
                     Spacer()
                     Text(ByteCountFormatter.string(fromByteCount: file.size, countStyle: .file)).foregroundStyle(.secondary)
                     Button("Remove", systemImage: "xmark.circle.fill") { model.clearSelectedFile() }.labelStyle(.iconOnly)
@@ -84,10 +84,9 @@ struct TimelineView: View {
                     Button("Attach file", systemImage: "plus") { importingFile = true }
                         .labelStyle(.iconOnly).buttonStyle(.glass).controlSize(.large)
                         .accessibilityIdentifier("attach-file")
-                    TextField("Message", text: $model.draft, axis: .vertical)
-                        .lineLimit(1...5).padding(.horizontal, 4).padding(.vertical, 10)
-                        .focused($composerFocused)
-                        .disabled(model.selectedFile != nil).accessibilityIdentifier("message-input")
+                    MessageInput(text: $model.draft, isFocused: $composerFocused,
+                                 isEnabled: model.selectedFile == nil,
+                                 onPasteImage: { model.pasteImage($0) })
                     Button("Send", systemImage: "arrow.up") { Task { await model.send() } }
                         .labelStyle(.iconOnly).buttonStyle(.glassProminent).controlSize(.large)
                         .disabled(!model.canSend).accessibilityIdentifier("send-message")

@@ -1,4 +1,5 @@
 import Foundation
+import UniformTypeIdentifiers
 
 struct Device: Codable, Equatable, Sendable {
     let id: String
@@ -68,7 +69,37 @@ struct APIErrorEnvelope: Decodable, Sendable {
 
 struct SelectedFile: Equatable, Sendable {
     nonisolated static let maximumBytes: Int64 = 64 << 20
-    let url: URL
+
+    /// A picked file is read from disk when it is sent. A pasted image has no
+    /// file behind it, so its bytes travel with the selection and are released
+    /// with it.
+    enum Contents: Equatable, Sendable {
+        case file(URL)
+        case pasted(Data)
+    }
+
+    let contents: Contents
     let name: String
     let size: Int64
+    /// Sent as the upload part's Content-Type. The Server stores it as given,
+    /// and every client previews a file only when it says `image/*`.
+    let mediaType: String
+
+    nonisolated init(url: URL, name: String, size: Int64) {
+        contents = .file(url)
+        self.name = name
+        self.size = size
+        mediaType = UTType(filenameExtension: (name as NSString).pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+    }
+
+    nonisolated init(pasted data: Data, name: String, mediaType: String) {
+        contents = .pasted(data)
+        self.name = name
+        size = Int64(data.count)
+        self.mediaType = mediaType
+    }
+
+    nonisolated var url: URL? {
+        if case .file(let url) = contents { url } else { nil }
+    }
 }

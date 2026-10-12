@@ -159,6 +159,18 @@ final class AppModel {
         } catch { sendError = error.localizedDescription }
     }
 
+    /// An image pasted into the message field takes the same single attachment
+    /// slot as a picked file, so sending, removing and the size limit stay one
+    /// path.
+    func pasteImage(_ image: PastedImage) {
+        guard Int64(image.data.count) <= SelectedFile.maximumBytes else {
+            sendError = "Files must be 64 MB or smaller."
+            return
+        }
+        setSelectedFile(SelectedFile(pasted: image.data, name: "image.\(image.filenameExtension)", mediaType: image.mediaType))
+        sendError = nil
+    }
+
     func clearSelectedFile() { if selectedFile != nil { setSelectedFile(nil) } }
 
     func fileImportFailed(_ error: Error) { sendError = error.localizedDescription }

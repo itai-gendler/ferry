@@ -347,6 +347,48 @@ final class FerryTests: XCTestCase {
         }
     }
 
+    /// The Server keeps the part's Content-Type as the message's media type, and
+    /// clients preview only `image/*`; a pasted screenshot sent as bytes would
+    /// arrive as a file card.
+    func testPastedImageUploadsItsBytesAsAnImage() async throws {
+        let model = makeModel(client: FileSendingService(), credentials: MemoryCredentials())
+        model.draft = "kept"
+        model.pasteImage(PastedImage(data: Self.onePixelPNG, mediaType: "image/png", filenameExtension: "png"))
+        XCTAssertEqual(model.selectedFile?.name, "image.png")
+        XCTAssertEqual(model.selectedFile?.size, Int64(Self.onePixelPNG.count))
+        XCTAssertNil(model.selectedFile?.url)
+        XCTAssertEqual(model.draft, "kept")
+
+        let client = FerryClient(session: URLSession(configuration: configuration()))
+        URLStub.handler = { request in
+            let stream = try XCTUnwrap(request.httpBodyStream)
+            stream.open()
+            defer { stream.close() }
+            var body = Data()
+            var buffer = [UInt8](repeating: 0, count: 1024)
+            while stream.hasBytesAvailable {
+                let count = stream.read(&buffer, maxLength: buffer.count)
+                if count <= 0 { break }
+                body.append(buffer, count: count)
+            }
+            let header = Data("filename=\"image.png\"\r\nContent-Type: image/png\r\n\r\n".utf8) + Self.onePixelPNG
+            XCTAssertNotNil(body.range(of: header))
+            let response = Data("""
+            {"id":"m1","sequence":1,"kind":"file","sender_name":"Phone","created_at":"2026-08-30T00:00:00Z",
+             "file":{"name":"image.png","media_type":"image/png","size":68,"download_url":"/api/v1/files/f1"}}
+            """.utf8)
+            return (HTTPURLResponse(url: request.url!, statusCode: 201, httpVersion: nil, headerFields: nil)!, response)
+        }
+        let message = try await client.sendFile(endpoint: ServerEndpoint("http://127.0.0.1:8080"), token: "token",
+                                                file: try XCTUnwrap(model.selectedFile))
+        XCTAssertEqual(message.file?.mediaType, "image/png")
+    }
+
+    func testPickedFileUploadsWithTheTypeOfItsExtension() {
+        XCTAssertEqual(SelectedFile(url: URL(filePath: "/tmp/a.jpg"), name: "a.jpg", size: 1).mediaType, "image/jpeg")
+        XCTAssertEqual(SelectedFile(url: URL(filePath: "/tmp/notes"), name: "notes", size: 1).mediaType, "application/octet-stream")
+    }
+
     func testRevocationClearsOldDraftAndInFlightSendState() async throws {
         let service = RevokingDuringSendService()
         let model = makeModel(client: service, credentials: MemoryCredentials())

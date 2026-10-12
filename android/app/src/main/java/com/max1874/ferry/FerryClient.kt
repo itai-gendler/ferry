@@ -76,7 +76,7 @@ class FerryClient(
                 output.write("--$boundary\r\n".toByteArray())
                 output.write("Content-Disposition: form-data; name=\"file\"; filename=\"$safeName\"\r\n".toByteArray())
                 output.write("Content-Type: ${safeMediaType(file.mediaType)}\r\n\r\n".toByteArray())
-                contentStore.open(file.uri).use { input -> copyUpload(input, output) }
+                (file.bytes?.inputStream() ?: contentStore.open(file.uri)).use { input -> copyUpload(input, output) }
                 output.write("\r\n--$boundary--\r\n".toByteArray())
             }
             FerryJson.message(readJsonResponse(connection))
