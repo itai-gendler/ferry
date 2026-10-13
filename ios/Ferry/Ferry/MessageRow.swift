@@ -90,7 +90,7 @@ private struct FileCard: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 12)
-            SaveControl(name: file.name, mediaType: file.mediaType, load: load)
+            SaveControl(name: file.name, load: load)
         }
         .padding(14).glassEffect(.regular, in: .rect(cornerRadius: 18))
     }
@@ -112,7 +112,7 @@ private struct ImageViewer: View {
             HStack(spacing: 12) {
                 // Saves the bytes the sender uploaded, not a re-encode of the
                 // decoded UIImage, so the file keeps its original format.
-                SaveControl(name: name, mediaType: "", load: load)
+                SaveControl(name: name, load: load)
                 Button("Close", systemImage: "xmark") { dismiss() }
                     .labelStyle(.iconOnly).buttonStyle(.glass)
             }
@@ -127,15 +127,10 @@ private struct ImageViewer: View {
 /// grow the session's footprint.
 private struct SaveControl: View {
     let name: String
-    let mediaType: String
     let load: () async -> Data?
     @State private var exporting = false
     @State private var document: ExportedFile?
     @State private var saving = false
-
-    private var contentType: UTType {
-        UTType(mimeType: mediaType) ?? UTType(filenameExtension: (name as NSString).pathExtension) ?? .data
-    }
 
     var body: some View {
         Button(saving ? "Saving…" : "Save", systemImage: "square.and.arrow.down") {
@@ -150,13 +145,15 @@ private struct SaveControl: View {
         .labelStyle(.titleOnly).font(.caption).buttonStyle(.plain)
         .disabled(saving).accessibilityIdentifier("save-file")
         .fileExporter(isPresented: $exporting, document: document,
-                      contentType: contentType, defaultFilename: name) { _ in
+                      contentTypes: ExportedFile.writableContentTypes, defaultFilename: name) { _ in
             document = nil
         }
     }
 }
 
 private struct ExportedFile: FileDocument {
+    // Export opaque original bytes. The original filename supplies the extension;
+    // the exporter uses this document's supported types instead of inferring a format.
     static var readableContentTypes: [UTType] { [.data] }
     let data: Data
 
