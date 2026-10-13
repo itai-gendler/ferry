@@ -14,7 +14,6 @@ struct TimelineView: View {
                         if model.messages.isEmpty {
                             ContentUnavailableView("Ready to ferry", systemImage: "shippingbox",
                                                    description: Text("Send text or a file to your other devices."))
-                                .padding(.top, 100)
                         }
                         ForEach(model.messages) { message in
                             MessageRow(message: message, image: model.images[message.id],
@@ -22,7 +21,10 @@ struct TimelineView: View {
                                        loadFile: { await model.fileData(for: message) })
                                 .id(message.id)
                         }
-                    }.padding(.horizontal, 18).padding(.vertical, 20)
+                    }
+                    .frame(maxWidth: 760)
+                    .padding(.horizontal, 18).padding(.vertical, 20)
+                    .frame(maxWidth: .infinity)
                 }
                 // The message field is multi-line, so Return adds a line instead of
                 // closing the keyboard; dragging or tapping the timeline closes it.
@@ -94,6 +96,8 @@ struct TimelineView: View {
                 .padding(10).glassEffect(.regular.interactive(), in: .rect(cornerRadius: 28))
             }
         }
+        .frame(maxWidth: 760)
         .padding(.horizontal, 12).padding(.bottom, 6)
+        .frame(maxWidth: .infinity)
     }
 }

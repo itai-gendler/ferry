@@ -105,7 +105,7 @@ private struct ImageViewer: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            Image(uiImage: image).resizable().scaledToFit().ignoresSafeArea()
+            Image(uiImage: image).resizable().scaledToFit()
         }
         .onTapGesture { dismiss() }
         .overlay(alignment: .topTrailing) {

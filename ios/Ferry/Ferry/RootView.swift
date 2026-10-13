@@ -56,7 +56,9 @@ private struct AccessView: View {
                     .padding(22).glassEffect(.regular, in: .rect(cornerRadius: 28))
                 }
             }
+            .frame(maxWidth: 560)
             .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
         }
     }
 }
