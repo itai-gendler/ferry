@@ -62,6 +62,12 @@ Browser acceptance is not native-app acceptance, and CI container runs are not r
 - **Observed (2026-09-15)**: the first CI run for 1.0.1 failed before the Android build. `setup-android` installs `tools platform-tools` by default, and `sdkmanager` now fails with `Failed to find package 'tools'`; the same runner image had passed the day before, so the SDK repository changed, not Ferry. CI now installs only `platform-tools`, and setup-android v4 still has the old default.
 - **Observed (2026-09-15)**: upgrade from 1.0.0 to 1.0.1 followed the 1.0.1 notes on an arm64 macOS host, in an isolated Compose project on loopback. A device, a text, a 200 KB file and an access password were created on 1.0.0; the notes' backup, image change, pull and `up -d` then ran. On 1.0.1 the device token still worked, the message list was identical, the downloaded file matched its SHA-256, a wrong password was refused (401) and the right one joined (201), and the log showed the new container-listener line. The `TZ` line left in the old `compose.yaml` caused no problem. Not covered: restoring that backup, a phone, and amd64.
 
+## 1.0.2 record
+
+- **Observed (2026-10-13)**: `v1.0.2` points to `209e477`, released by run [38364727661](https://github.com/max1874/ferry/actions/runs/38364727661) from CI run [38363293046](https://github.com/max1874/ferry/actions/runs/38363293046) under `sha256:43daceb1059f0e3d287141e6372d0699d8aa6b23e30a1defc788735db3bf471a`. Max authorized the release and its publishing on 2026-10-13. Outside CI, an anonymous manifest request returned that digest and the Compose download URL answered anonymously.
+- **Observed (2026-10-13)**: the Server and Web change is the download link (`docs/web-download-links.md`); desktop Chrome saved a downloaded file with its original SHA-256 from an image built at `8371f22`. Max waived the Android in-app browser check.
+- **Observed (2026-10-13)**: the maintainer's own deployment moved from 1.0.0 through a local `main` build to the published 1.0.2 image after a `scripts/ferry-data.sh` backup, on the same volume; the container reported revision `209e477` and served the new Web app.
+
 ## After 1.0.0
 
 Three new users will each deploy Ferry from the README on their own. Record how long each deployment took and where each person got stuck. Ferry collects no telemetry for this.

@@ -66,12 +66,12 @@ iOS 和 Android 原生 App 已经有了，但它们是可选的，也不属于 F
 1. 从[最新版本](https://github.com/max1874/ferry/releases/latest)**下载 Compose 文件**并进入目录：
 
    ```bash
-   curl -fLO https://github.com/max1874/ferry/releases/download/v1.0.1/ferry-1.0.1-docker-compose.tar.gz
-   tar -xzf ferry-1.0.1-docker-compose.tar.gz
+   curl -fLO https://github.com/max1874/ferry/releases/download/v1.0.2/ferry-1.0.2-docker-compose.tar.gz
+   tar -xzf ferry-1.0.2-docker-compose.tar.gz
    cd ferry
    ```
 
-   下载包里有 `compose.yaml`、`.env.example` 和用于备份的 `scripts/ferry-data.sh`，请保持这个目录结构。它不是程序本身：Ferry 启动时，Compose 会拉取公开镜像 `ghcr.io/max1874/ferry:1.0.1`。
+   下载包里有 `compose.yaml`、`.env.example` 和用于备份的 `scripts/ferry-data.sh`，请保持这个目录结构。它不是程序本身：Ferry 启动时，Compose 会拉取公开镜像 `ghcr.io/max1874/ferry:1.0.2`。
 
 2. **创建配置文件：**
 
@@ -164,7 +164,7 @@ docker compose logs --tail=100 ferry
 
 | 配置 | 默认值 | 含义 |
 | --- | --- | --- |
-| `FERRY_IMAGE` | `ghcr.io/max1874/ferry:1.0.1` | 运行的镜像和版本 |
+| `FERRY_IMAGE` | `ghcr.io/max1874/ferry:1.0.2` | 运行的镜像和版本 |
 | `FERRY_HOST_IP` | `127.0.0.1` | Docker 把端口发布到宿主机的哪个地址；必须是 loopback 或私有地址 |
 | `FERRY_PORT` | `42817` | 宿主机和容器里使用的端口 |
 | `FERRY_TRUSTED_ORIGIN` | 空 | 你自己的 TLS 反向代理的 origin |

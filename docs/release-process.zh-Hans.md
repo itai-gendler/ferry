@@ -62,6 +62,12 @@
 - **Observed（2026-09-15）**：1.0.1 的第一次 CI run 在 Android 构建之前就失败了。`setup-android` 默认安装 `tools platform-tools`，而 `sdkmanager` 现在报 `Failed to find package 'tools'`；同一个 runner 镜像前一天还通过，所以变的是 SDK 仓库，不是 Ferry。CI 现在只安装 `platform-tools`；setup-android v4 仍保留旧的默认值。
 - **Observed（2026-09-15）**：在一台 arm64 macOS 主机上，用一个隔离的 Compose 项目、只监听 loopback，按 1.0.1 发布说明从 1.0.0 升级到 1.0.1。先在 1.0.0 上创建一台设备、一条文字、一个 200 KB 的文件和访问密码，再执行说明里的备份、改镜像、pull 和 `up -d`。升级到 1.0.1 后，设备 token 仍然有效，消息列表完全一致，下载的文件 SHA-256 一致，错误密码被拒绝（401），正确密码可以加入（201），日志显示了新的容器内监听地址那一行。旧 `compose.yaml` 里留着的 `TZ` 行没有造成问题。未覆盖：用这份备份恢复、手机，以及 amd64。
 
+## 1.0.2 记录
+
+- **Observed（2026-10-13）**：`v1.0.2` 指向 `209e477`，由发布 run [38364727661](https://github.com/max1874/ferry/actions/runs/38364727661) 从 CI run [38363293046](https://github.com/max1874/ferry/actions/runs/38363293046) 发布，摘要为 `sha256:43daceb1059f0e3d287141e6372d0699d8aa6b23e30a1defc788735db3bf471a`。Max 于 2026-10-13 授权发布并由代理点击发布。在 CI 之外匿名请求清单，返回的就是这个摘要；Compose 下载地址也能匿名访问。
+- **Observed（2026-10-13）**：Server 和 Web 的改动是下载链接（`docs/web-download-links.zh-Hans.md`）；用 `8371f22` 构建的镜像，桌面 Chrome 下载下来的文件 SHA-256 与原文件一致。Max 免除了安卓内置浏览器的检查。
+- **Observed（2026-10-13）**：维护者自己的部署先用 `scripts/ferry-data.sh` 备份，再在同一个数据卷上从 1.0.0 经本地 `main` 构建换到已发布的 1.0.2 镜像；容器报告的 revision 是 `209e477`，并提供新版 Web 应用。
+
 ## 1.0.0 之后
 
 三位新用户会各自按 README 独立部署 Ferry。记录每次部署的耗时和每个人卡住的具体位置。Ferry 不为此收集任何遥测。
