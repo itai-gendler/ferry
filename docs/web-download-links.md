@@ -32,4 +32,5 @@ The URL itself is the credential: for five minutes anyone who has it can downloa
 ## Acceptance
 
 - Go test `TestDownloadLinkGrantsOneFileWithoutBearerUntilExpiryOrRevocation`: issuing needs Bearer; a text message gets 404; the link downloads the bytes as an attachment without Bearer and is reusable within its lifetime; it is 404 at expiry, after the issuing device is revoked, and for malformed or unknown tickets.
+- Desktop Chrome (2026-10-13), image built from `8371f22` on loopback: after a 3 MiB random file was sent, clicking its card made one `POST …/link` and saved the file through the browser's downloader with the original SHA-256.
 - Still open: a real download from an Android in-app browser and from the phone's system browser against a Server running this code.

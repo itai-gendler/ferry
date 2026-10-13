@@ -32,4 +32,5 @@ URL 本身就是凭证：五分钟内，能访问到 Server 所在网络、又�
 ## 验收
 
 - Go 测试 `TestDownloadLinkGrantsOneFileWithoutBearerUntilExpiryOrRevocation`：签发需要 Bearer；文本消息返回 404；链接不带 Bearer 也能以附件形式下载到原始字节，有效期内可重复使用；到期、签发设备被吊销、ticket 格式不对或不存在时返回 404。
+- 桌面 Chrome（2026-10-13），用 `8371f22` 构建的镜像、只监听 loopback：发送一个 3 MiB 随机文件后点它的卡片，页面只发出一次 `POST …/link`，浏览器的下载器保存下来的文件 SHA-256 与原文件一致。
 - 尚未完成：在运行这版代码的 Server 上，用安卓内置浏览器和手机系统浏览器各真实下载一次。
