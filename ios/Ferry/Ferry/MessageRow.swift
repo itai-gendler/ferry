@@ -118,6 +118,7 @@ private struct ImageViewer: View {
             }
             .padding(20)
         }
+        .preferredColorScheme(.dark)
     }
 }
 
