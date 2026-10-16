@@ -12,6 +12,12 @@
   <p><a href="#快速开始"><strong>快速开始</strong></a> · <a href="#排错">排错</a> · <a href="README.md">English</a></p>
 </div>
 
+<p align="center">
+  <a href="https://max1874.com/ferry/"><img src="docs/demo.zh.gif" width="600" alt="iPhone 发出的链接出现在 Mac 的时间线上，Mac 再发回一张照片"></a>
+  <br>
+  <sub>动图录自 <a href="https://max1874.com/ferry/">max1874.com/ferry</a>，那里可以亲手试。</sub>
+</p>
+
 ## 让你的 agent 帮你部署
 
 把下面这段话复制给能够在目标电脑上执行命令的 agent，就可以让它带你完成 Docker 部署。安装软件或获取系统权限时，可能需要你授权。
