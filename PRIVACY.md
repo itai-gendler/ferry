@@ -2,7 +2,7 @@
 
 > English | [简体中文](PRIVACY.zh-Hans.md)
 
-Effective date: 2026-09-27
+Effective date: 2026-10-16
 
 This policy covers the Ferry Server, the Web app it serves, the Ferry iOS App (listed as FerryDrop) and the Ferry Android App.
 
@@ -12,7 +12,7 @@ The Ferry project does not run a server, operate an account system or collect an
 
 ## What the apps store on your device
 
-- **The Server address** you enter, so the app can reconnect. Android also keeps the device name you enter. iOS does not store a device name: it uses the name of your iPhone as set in iOS Settings, and sends it to your Server when the device joins.
+- **The Server address** you enter, so the app can reconnect. Android also keeps the device name you enter. iOS does not store a device name: the join screen fills in the name of your iPhone as set in iOS Settings, you can edit it there, and it is sent to your Server when the device joins.
 - **A device token** issued by your Ferry Server when the device joins. iOS keeps it in the Keychain; Android encrypts it with a key held in the Android Keystore. Android excludes app data from system backups.
 - Files you choose to save leave Ferry and go wherever you save them: on iOS, a location you pick in Files; on Android, a location such as Downloads.
 

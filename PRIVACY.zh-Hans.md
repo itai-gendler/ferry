@@ -2,7 +2,7 @@
 
 > [English](PRIVACY.md) | 简体中文
 
-生效日期：2026-09-27
+生效日期：2026-10-16
 
 本政策适用于 Ferry Server、它提供的 Web 应用、Ferry iOS App（上架名 FerryDrop）和 Ferry Android App。
 
@@ -12,7 +12,7 @@ Ferry 项目不运营服务器，没有账号系统，也不收集任何数据�
 
 ## App 在你的设备上保存什么
 
-- 你填写的**服务器地址**，用于重新连接。Android 还会保存你填写的设备名。iOS 不保存设备名：它用你在 iOS 设置里给这台 iPhone 起的名字，在设备加入时发给你的 Server。
+- 你填写的**服务器地址**，用于重新连接。Android 还会保存你填写的设备名。iOS 不保存设备名：加入界面会预先填好你在 iOS 设置里给这台 iPhone 起的名字，你可以在那里修改，设备加入时发给你的 Server。
 - 设备加入时由你的 Ferry Server 签发的**设备 token**。iOS 把它存在钥匙串里；Android 用 Android Keystore 中的密钥加密保存。Android 的应用数据不参与系统备份。
 - 你主动保存的文件会离开 Ferry，存到你选择的位置：iOS 上是你在「文件」里选的位置，Android 上是下载目录等位置。
 
