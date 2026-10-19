@@ -22,6 +22,7 @@ const connectionElement = document.querySelector("#connection");
 const accessElement = document.querySelector("#access");
 const accessForm = document.querySelector("#access-form");
 const accessError = document.querySelector("#access-error");
+const httpNotice = document.querySelector("#http-notice");
 const passwordField = document.querySelector("#password-field");
 const accessPasswordInput = document.querySelector("#access-password");
 const deviceNameInput = document.querySelector("#device-name");
@@ -201,6 +202,9 @@ function showAccess(message = "", clearCredential = true, passwordRequired = fal
   accessElement.hidden = false;
   sidebar.hidden = true;
   passwordField.hidden = !passwordRequired;
+  // Behind a deployer's TLS proxy the page itself is HTTPS, and the warning
+  // would be false.
+  httpNotice.hidden = location.protocol === "https:";
   conversationElement.hidden = true;
   devicesPage.hidden = true;
   composerShell.hidden = true;
