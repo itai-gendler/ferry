@@ -68,6 +68,12 @@
 - **Observed（2026-10-13）**：Server 和 Web 的改动是下载链接（`docs/web-download-links.zh-Hans.md`）；用 `8371f22` 构建的镜像，桌面 Chrome 下载下来的文件 SHA-256 与原文件一致。Max 免除了安卓内置浏览器的检查。
 - **Observed（2026-10-13）**：维护者自己的部署先用 `scripts/ferry-data.sh` 备份，再在同一个数据卷上从 1.0.0 经本地 `main` 构建换到已发布的 1.0.2 镜像；容器报告的 revision 是 `209e477`，并提供新版 Web 应用。
 
+## 1.0.3 记录
+
+- **Observed（2026-10-19）**：`v1.0.3` 指向 `871b592`，由发布 run [39216949492](https://github.com/max1874/ferry/actions/runs/39216949492) 从 CI run [39215682042](https://github.com/max1874/ferry/actions/runs/39215682042) 发布，摘要为 `sha256:881e9273d6ffa3b9d34b8f66b00b39e85fbd0614c574d18d3138a05054def09f`。Max 授权发布并由代理点击发布。在 CI 之外匿名请求清单，返回的就是这个摘要；Compose 下载地址也能匿名访问。
+- **Observed（2026-10-19）**：Web 的改动是图片加载中的样式，以及重试和 60 秒超时（`9a68b8c`）。用 `9a68b8c` 构建的本地 Server、桌面 Chrome，在页面里把图片请求挂住：浅色和深色都显示转圈而不是破图图标；挂住期间重新连接，图片在第二次请求时加载出来；挂住超过 60 秒的请求变成文件卡片。
+- **Observed（2026-10-19）**：维护者自己的部署先用 `scripts/ferry-data.sh` 备份，再在同一个数据卷上从 1.0.2 换到 1.0.3；容器报告的 revision 是 `871b592`，并提供新版 Web 应用。
+
 ## 1.0.0 之后
 
 三位新用户会各自按 README 独立部署 Ferry。记录每次部署的耗时和每个人卡住的具体位置。Ferry 不为此收集任何遥测。

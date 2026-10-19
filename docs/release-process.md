@@ -68,6 +68,12 @@ Browser acceptance is not native-app acceptance, and CI container runs are not r
 - **Observed (2026-10-13)**: the Server and Web change is the download link (`docs/web-download-links.md`); desktop Chrome saved a downloaded file with its original SHA-256 from an image built at `8371f22`. Max waived the Android in-app browser check.
 - **Observed (2026-10-13)**: the maintainer's own deployment moved from 1.0.0 through a local `main` build to the published 1.0.2 image after a `scripts/ferry-data.sh` backup, on the same volume; the container reported revision `209e477` and served the new Web app.
 
+## 1.0.3 record
+
+- **Observed (2026-10-19)**: `v1.0.3` points to `871b592`, released by run [39216949492](https://github.com/max1874/ferry/actions/runs/39216949492) from CI run [39215682042](https://github.com/max1874/ferry/actions/runs/39215682042) under `sha256:881e9273d6ffa3b9d34b8f66b00b39e85fbd0614c574d18d3138a05054def09f`. Max authorized the release and had the agent publish the draft. Outside CI, an anonymous manifest request returned that digest and the Compose download URL answered anonymously.
+- **Observed (2026-10-19)**: the Web change is the image loading state and its retry and 60-second timeout (`9a68b8c`). Desktop Chrome against a local Server built at `9a68b8c`, with the image request held in the page: a spinner instead of the broken-image icon in light and dark, a reconnect during the held request loaded the image on a second request, and a request held past 60 seconds became the file card.
+- **Observed (2026-10-19)**: the maintainer's own deployment moved from 1.0.2 to 1.0.3 after a `scripts/ferry-data.sh` backup, on the same volume; the container reported revision `871b592` and served the new Web app.
+
 ## After 1.0.0
 
 Three new users will each deploy Ferry from the README on their own. Record how long each deployment took and where each person got stuck. Ferry collects no telemetry for this.
