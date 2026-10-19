@@ -53,11 +53,15 @@ This file is Ferry's repository-level collaboration contract and the single auth
 
 ## Simulators and machine load (hard constraints)
 
-- At most 1 booted Simulator and 1 `xcodebuild` at any time; no parallel builds or parallel UI tests.
-- After testing, shut down and delete the Simulators this task created; never delete the user's existing devices or data.
+- Before booting a Simulator, installing on Max's iPhone, taking screenshots or measuring performance, read `/Users/max/Projects/Repo/apple-developer/knowledge/devices.md`. The machine-wide limits are kept only there: how many Simulators may be booted (other sessions' devices count), reusing an existing device instead of creating one, one `xcodebuild` at a time. Do not copy them into this file. On 2026-10-19 an outdated copy here sent a screenshot session to create fresh devices, and their first boots pushed the load average to 53.
+- No parallel builds or parallel UI tests. Never delete the user's existing devices or data.
 - Do not trigger `mediaanalysisd`: do not bulk-import media into the photo library, and do not import large images or video. When media acceptance is genuinely needed, reuse a one-off seed kept to the smallest count and size that proves the behaviour.
 - Keep screenshots only for key acceptance points, all written to a temporary directory outside the repository or to a git-ignored artifacts directory inside it whose name ends in `.noindex`.
 - Do not start heavy long-running processes unrelated to the task.
+
+## Apple account
+
+- For the Apple account, App Store releases and names, Developer ID signing or notarization, read `/Users/max/Projects/Repo/apple-developer/skill/SKILL.md` first; for name lookups or reservations also read that repository's `.agents/skills/ios-app-name/SKILL.md`. Ferry's own build and release steps still follow this repository's rules.
 
 ## Verification standard
 
