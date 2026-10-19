@@ -52,6 +52,7 @@ const imageObserver = new IntersectionObserver((entries) => {
     loadMessageImage(entry.target);
   }
 }, { rootMargin: "400px" });
+const IMAGE_LOAD_TIMEOUT_MS = 60000;
 
 let cursor = 0;
 let loading = false;
@@ -145,6 +146,7 @@ function resetTimeline() {
   rendered.clear();
   for (const objectURL of messageImages.values()) URL.revokeObjectURL(objectURL);
   messageImages.clear();
+  imageObserver.disconnect();
   messagesElement.replaceChildren();
   welcome.hidden = false;
   // The guide belongs to a timeline known to be empty, not one still loading.
@@ -373,6 +375,7 @@ function fileCard(message) {
 function imageAttachment(message) {
   const figure = document.createElement("figure");
   figure.className = "message-image is-loading";
+  figure.setAttribute("aria-busy", "true");
   const image = document.createElement("img");
   image.alt = message.file.name;
   image.decoding = "async";
@@ -382,27 +385,52 @@ function imageAttachment(message) {
   return figure;
 }
 
+// The observer fires once per figure, so an image whose request died without
+// an answer has to be queued again or it stays a loading placeholder for good.
 async function loadMessageImage(figure) {
   const message = pendingImages.get(figure);
   if (!message) return;
   const generation = authGeneration;
+  const authSignal = authController.signal;
+  const request = new AbortController();
+  const abortRequest = () => request.abort();
+  authSignal.addEventListener("abort", abortRequest, { once: true });
+  // A request to a laptop that went to sleep or a dropped Wi-Fi link can hang
+  // with no error at all; give up and offer the file card instead.
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    request.abort();
+  }, IMAGE_LOAD_TIMEOUT_MS);
   try {
-    const response = await authenticatedFetch(message.file.download_url, { cache: "no-store", signal: authController.signal });
-    if (generation !== authGeneration) return;
+    const response = await authenticatedFetch(message.file.download_url, { cache: "no-store", signal: request.signal });
+    if (generation !== authGeneration) return retryMessageImage(figure);
     if (!response.ok) throw new Error(await readError(response));
     const blob = await response.blob();
-    if (generation !== authGeneration) return;
+    if (generation !== authGeneration) return retryMessageImage(figure);
     const objectURL = URL.createObjectURL(blob);
     messageImages.set(message.id, objectURL);
     const image = figure.querySelector("img");
-    image.addEventListener("load", () => figure.classList.remove("is-loading"), { once: true });
+    image.addEventListener("load", () => {
+      figure.classList.remove("is-loading");
+      figure.removeAttribute("aria-busy");
+    }, { once: true });
     image.addEventListener("error", () => fallBackToFileCard(figure, message), { once: true });
     image.addEventListener("click", () => openViewer(objectURL, message.file.name));
     image.src = objectURL;
   } catch (error) {
-    if (generation !== authGeneration || error.name === "AbortError") return;
+    // A reconnect aborts every request in flight; the image loads again once
+    // it is on screen under the new connection.
+    if (!timedOut && (generation !== authGeneration || error.name === "AbortError")) return retryMessageImage(figure);
     fallBackToFileCard(figure, message);
+  } finally {
+    clearTimeout(timer);
+    authSignal.removeEventListener("abort", abortRequest);
   }
+}
+
+function retryMessageImage(figure) {
+  if (figure.isConnected) imageObserver.observe(figure);
 }
 
 // The bubble tightened its padding for an image; a card needs it back.

@@ -117,7 +117,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid #777; outline-off
 .message-text { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 15px; line-height: 1.5; }
 .message-body.has-image { padding: 4px; }
 .message-image { width: fit-content; max-width: 100%; margin: 0; overflow: hidden; border-radius: 20px; }
-.message-image.is-loading { min-width: 176px; min-height: 118px; background: var(--soft); }
+/* Until the bytes arrive the <img> has no src, and the browser draws its
+   broken-image icon and alt text: a loading image looked like a failed one. */
+.message-image.is-loading { min-width: 176px; min-height: 118px; display: grid; place-items: center; background: var(--hover); }
+.message-image.is-loading img { display: none; }
+.message-image.is-loading::after { width: 22px; height: 22px; content: ""; border: 2px solid var(--border); border-top-color: var(--muted); border-radius: 50%; animation: image-spin .8s linear infinite; }
+@keyframes image-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .message-image.is-loading::after { animation-duration: 2.4s; } }
 /* A percentage inside min() is indefinite while the browser is measuring
    intrinsic width, so the constraint was dropped and the bubble sized itself
    from max-height times the aspect ratio instead -- leaving a tall image with
