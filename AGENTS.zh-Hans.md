@@ -53,11 +53,15 @@
 
 ## 模拟器与机器负载（硬约束）
 
-- 任意时刻最多 1 个 booted Simulator、1 个 `xcodebuild`；禁止并行构建或并行 UI 测试。
-- 测试完成后关闭并删除本任务创建的 Simulator；不得删除用户已有设备或数据。
+- 开 Simulator、往 Max 的 iPhone 装机、截图或测性能之前，先读 `/Users/max/Projects/Repo/apple-developer/knowledge/devices.md`。整机限额只记在那里：同时能开几台 Simulator（别的会话开的也算）、复用常驻设备而不是新建、同时只跑 1 个 `xcodebuild`。不要抄进本文件。2026-10-19 本文件里一份过期的副本让截图会话新建了设备，新设备首次开机把负载冲到 53。
+- 禁止并行构建或并行 UI 测试。不得删除用户已有设备或数据。
 - 不主动触发 `mediaanalysisd`：不要批量向照片库导入媒体，不导入大图或视频。确需媒体验收时，复用一次性 seed，数量和尺寸压到能证明行为的最小值。
 - 截图只保留关键验收点，全部写入仓库外临时目录，或仓库内以 `.noindex` 结尾且被 git 忽略的 artifacts 目录。
 - 不启动与任务无关的常驻重负载进程。
+
+## Apple 账号
+
+- 涉及 Apple 账号、App Store 发布与名称、Developer ID 签名或公证时，先读 `/Users/max/Projects/Repo/apple-developer/skill/SKILL.md`；名称查询或占用再读该仓库的 `.agents/skills/ios-app-name/SKILL.md`。Ferry 自身的构建和发布流程仍以本仓库规则为准。
 
 ## 验证标准
 
