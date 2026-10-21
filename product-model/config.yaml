@@ -1,0 +1,5 @@
+schema: 11
+sdd:
+  paths:
+    - docs/product-core.md
+    - api/openapi.yaml
